@@ -1,62 +1,100 @@
-import { useEffect, useState } from 'react';
-import { Text, SafeAreaView, StyleSheet, TextInput, Button } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function App() {
-const [nome, setNome] = useState('')
-const [nomeArmazenado, setNomeArmazenado] = useState('')
+const App = () => {
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+  const [email, setEmail] = useState('');
+  const [userInfo, setUserInfo] = useState(null);
 
-const salvarNome = async () =>{
-  try {
-    await AsyncStorage.setItem('@nome_usuario', nome)
-    alert('Nome salvo com sucesso!')
-    carregarDados()
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-const carregarDados = async () =>{
-  try {
-    const valor = await AsyncStorage.getItem('@nome_usuario')
-    if(valor != null){
-      setNomeArmazenado(valor)
+  // Função para salvar o objeto JSON no AsyncStorage
+  const saveUserInfo = async () => {
+    try {
+      const user = {
+        name: name,
+        age: age,
+        email: email,
+      };
+      // Converter o objeto em uma string JSON
+      const jsonValue = JSON.stringify(user);
+      await AsyncStorage.setItem('@user_info', jsonValue);
+      alert('Informações do usuário salvas!');
+      loadUserInfo()
+    } catch (e) {
+      console.log(e);
     }
-  } catch (error) {
-    console.log(error);
-  }
-}
+  };
 
-// Carregar o ultimo nome ao carregar o App
-useEffect(
-  () => {carregarDados()}, [])
+  // Função para carregar as informações armazenadas no AsyncStorage
+  const loadUserInfo = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('@user_info');
+      if (jsonValue !== null) {
+        // Converter a string JSON de volta para objeto
+        setUserInfo(JSON.parse(jsonValue));
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // Usar useEffect para carregar as informações ao iniciar o aplicativo
+  useEffect(() => {
+    loadUserInfo();
+  }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text>Nome armazenado: {nomeArmazenado}</Text>
-        <TextInput
-        placeholder='Digite seu nome'
-        value={nome}
-        onChangeText={setNome}
-        style={styles.input}
-        ></TextInput>
-        <Button title='Salvar nome' onPress={salvarNome}></Button>
-    </SafeAreaView>
+    <View style={{ padding: 20 }}>
+      {userInfo ? (
+        <View>
+          <Text>Nome: {userInfo.name}</Text>
+          <Text>Idade: {userInfo.age}</Text>
+          <Text>Email: {userInfo.email}</Text>
+        </View>
+      ) : (
+        <Text>Nenhuma informação armazenada.</Text>
+      )}
+      <TextInput
+        placeholder="Digite seu nome"
+        value={name}
+        onChangeText={setName}
+        style={{
+          height: 40,
+          borderColor: 'gray',
+          borderWidth: 1,
+          marginVertical: 10,
+          padding: 10,
+        }}
+      />
+      <TextInput
+        placeholder="Digite sua idade"
+        value={age}
+        onChangeText={setAge}
+        keyboardType="numeric"
+        style={{
+          height: 40,
+          borderColor: 'gray',
+          borderWidth: 1,
+          marginVertical: 10,
+          padding: 10,
+        }}
+      />
+      <TextInput
+        placeholder="Digite seu e-mail"
+        value={email}
+        onChangeText={setEmail}
+        style={{
+          height: 40,
+          borderColor: 'gray',
+          borderWidth: 1,
+          marginVertical: 10,
+          padding: 10,
+        }}
+      />
+      <Button title="Salvar Informações" onPress={saveUserInfo} />
+    </View>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#ecf0f1',
-    padding: 8,
-  },
-  input:{
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginVertical: 10,
-    padding: 10
-  }
-});
+export default App;
